@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BAC Clock</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist+Mono:wght@400&display=swap" rel="stylesheet" />
+    <style>
+      :root {
+        --teal: #56e4fe;
+        --purple: #b876ff;
+        --cyan: #33e0ff;
+        --panel: #101010;
+        --dim: #666;
+        --subtle: #8c8c8c;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        color: #fff;
+        overflow: hidden;
+        font-family: "Geist Mono", ui-monospace, monospace;
+        font-weight: 400;
+      }
+
+      button,
+      input {
+        font: inherit;
+        color: inherit;
+        margin: 0;
+      }
+
+      p {
+        margin: 0;
+      }
+
+      /* The Figma frame is 1728 x 1117; scale it to fit the window. */
+      .stage {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1728px;
+        height: 1117px;
+        transform: translate(-50%, -50%) scale(var(--scale, 1));
+      }
+
+      /* ---------- Glow ---------- */
+      .glow {
+        position: absolute;
+        left: -763.22px;
+        top: 164.71px;
+        width: 1747.902px;
+        height: 1773.79px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        pointer-events: none;
+        transition: left 1.2s cubic-bezier(0.22, 1, 0.36, 1), top 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+      }
+
+      .stage.is-clock .glow {
+        left: -708px;
+        top: 206px;
+      }
+
+      .glow-inner {
+        position: relative;
+        flex: none;
+        width: 1352.787px;
+        height: 1396.019px;
+        transform: rotate(-19.95deg);
+      }
+
+      .glow-inner img {
+        position: absolute;
+        top: -5.58%;
+        left: -6.22%;
+        width: 112.66%;
+        height: 111.47%;
+        display: block;
+        max-width: none;
+      }
+
+      /* ---------- Left side ---------- */
+      .intro,
+      .clock {
+        position: absolute;
+        transition: opacity 0.5s ease;
+      }
+
+      .stage.is-clock .intro,
+      .stage:not(.is-clock) .clock {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .intro {
+        left: 153px;
+        top: 406px;
+      }
+
+      .intro h1 {
+        margin: 0 0 44px;
+        font-size: 32px;
+        font-weight: 400;
+        line-height: normal;
+      }
+
+      .intro p {
+        font-size: 24px;
+        white-space: nowrap;
+      }
+
+      .clock {
+        left: 148px;
+        top: 277px;
+        width: 486px;
+        display: flex;
+        flex-direction: column;
+        gap: 99px;
+      }
+
+      .clock-main {
+        display: flex;
+        flex-direction: column;
+        gap: 56px;
+      }
+
+      .clock-main .label {
+        font-size: 24px;
+      }
+
+      .countdown {
+        font-size: 96px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .clock-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .clock-info > div {
+        display: flex;
+        flex-direction: column;
+        gap: 26px;
+        width: 173px;
+      }
+
+      .clock-info .small {
+        font-size: 14px;
+        white-space: nowrap;
+      }
+
+      .clock-info .big {
+        font-size: 48px;
+        white-space: nowrap;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .disclaimer {
+        position: absolute;
+        left: 1040px;
+        top: 1000px;
+        width: 599px;
+        text-align: center;
+        white-space: nowrap;
+        font-size: 12px;
+        color: var(--subtle);
+      }
+
+      /* ---------- Input panel ---------- */
+      .panel {
+        position: absolute;
+        left: 1040px;
+        top: 142px;
+        width: 599px;
+        height: 833px;
+        overflow: hidden;
+        background: var(--panel);
+        border: 1px solid #616161;
+        border-radius: 21px;
+      }
+
+      .panel > * {
+        position: absolute;
+        left: 86px;
+      }
+
+      .reset {
+        left: 442px;
+        top: 63px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0;
+        border: 0;
+        background: none;
+        color: var(--cyan);
+        font-size: 18px;
+        cursor: pointer;
+      }
+
+      .reset img {
+        width: 17px;
+        height: 17px;
+      }
+
+      /* Sex */
+      .sex {
+        top: 128px;
+        display: flex;
+        gap: 45px;
+      }
+
+      .sex button {
+        width: 196px;
+        height: 104px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 16px;
+        background: #000;
+        border: 1px solid #818181;
+        border-radius: 12px;
+        font-size: 14px;
+        cursor: pointer;
+      }
+
+      .sex button[aria-pressed="true"] {
+        border: 2px solid transparent;
+        background:
+          linear-gradient(#000, #000) padding-box,
+          linear-gradient(135deg, var(--teal), var(--purple)) border-box;
+      }
+
+      .sex .male-icon {
+        width: 22px;
+        height: 22.0025px;
+      }
+
+      .sex .female-icon {
+        width: 27px;
+        height: 27px;
+      }
+
+      /* Shared card */
+      .card {
+        width: 426px;
+        padding: 15px 21px;
+        border: 1px solid #696969;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 42px;
+      }
+
+      .card:focus-within {
+        border-color: #9a9a9a;
+      }
+
+      .card-title {
+        font-size: 14px;
+      }
+
+      /* Body weight */
+      .weight {
+        top: 285px;
+      }
+
+      .weight-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 24px;
+        color: var(--dim);
+      }
+
+      .weight-row input {
+        width: 300px;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 24px;
+        color: #fff;
+      }
+
+      input::placeholder {
+        color: var(--dim);
+        opacity: 1;
+      }
+
+      /* Drinks */
+      .drinks {
+        top: 437px;
+        display: flex;
+        gap: 24px;
+      }
+
+      .drink {
+        width: 126px;
+        padding: 13px 16px;
+        border: 1px solid #3b3b3b;
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .drink-icon {
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .drink-icon .icon-24 {
+        width: 24px;
+        height: 24px;
+      }
+
+      /* Beer mug art sits inside a 24px box, per the Figma layer */
+      .drink-icon .beer-box {
+        position: relative;
+        width: 24px;
+        height: 24px;
+      }
+
+      .drink-icon .beer-box img {
+        position: absolute;
+        left: 3.5px;
+        top: 5.25px;
+        width: 16.5px;
+        height: 17.5px;
+      }
+
+      .drink-name {
+        margin-top: 3px;
+        font-size: 12px;
+      }
+
+      .drink-meta {
+        margin-top: 6px;
+        font-size: 10px;
+        color: var(--subtle);
+        white-space: nowrap;
+      }
+
+      .stepper {
+        display: flex;
+        align-items: center;
+        margin-top: 12px;
+      }
+
+      .stepper button {
+        width: 29px;
+        height: 38px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font-size: 14px;
+        cursor: pointer;
+        border-radius: 6px;
+      }
+
+      .stepper button:hover {
+        background: #1c1c1c;
+      }
+
+      .stepper button:disabled {
+        opacity: 0.35;
+        cursor: default;
+        background: none;
+      }
+
+      .stepper output {
+        width: 31px;
+        text-align: center;
+        font-size: 18px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Time since first drink */
+      .time {
+        top: 616px;
+      }
+
+      .time-row {
+        position: relative;
+        height: 31px;
+      }
+
+      .time-row input {
+        position: absolute;
+        top: -4px;
+        width: 40px;
+        padding: 0;
+        border: 0;
+        outline: 0;
+        background: transparent;
+        font-size: 28px;
+        color: #fff;
+      }
+
+      .time-row input::placeholder {
+        color: #3b3b3b;
+      }
+
+      .time-row span {
+        position: absolute;
+        top: 6px;
+        font-size: 18px;
+        color: var(--dim);
+      }
+
+      #hours {
+        left: 0;
+      }
+
+      .hours-label {
+        left: 44px;
+      }
+
+      #minutes {
+        left: 155px;
+      }
+
+      .minutes-label {
+        left: 199px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="stage" id="stage">
+      <div class="glow" aria-hidden="true">
+        <div class="glow-inner"><img src="bac-assets/glow.svg" alt="" /></div>
+      </div>
+
+      <!-- Screen 1 -->
+      <div class="intro">
+        <h1>Can you Drive?</h1>
+        <p>How long until you’re back at BAC 0.00%?</p>
+      </div>
+
+      <!-- Screen 2 -->
+      <div class="clock" aria-live="polite">
+        <div class="clock-main">
+          <p class="label">Time until BAC 0.0%</p>
+          <p class="countdown" id="countdown">00:00</p>
+        </div>
+        <div class="clock-info">
+          <div>
+            <p class="small">BAC Now</p>
+            <p class="big" id="bac-now">0.000%</p>
+          </div>
+          <div>
+            <p class="small">BAC &lt; 0.08% IN</p>
+            <p class="big" id="legal">00:00</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="disclaimer">Estimate only. Everyone metabolizes alcohol differently. When in doubt, don't drive.</p>
+
+      <!-- Inputs -->
+      <form class="panel" id="panel" autocomplete="off" novalidate>
+        <button type="button" class="reset" id="reset">reset <img src="bac-assets/reset.svg" alt="" /></button>
+
+        <div class="sex" role="group" aria-label="Sex">
+          <button type="button" data-sex="male" aria-pressed="false">
+            <img class="male-icon" src="bac-assets/male.svg" alt="" />
+            Male
+          </button>
+          <button type="button" data-sex="female" aria-pressed="false">
+            <img class="female-icon" src="bac-assets/female.svg" alt="" />
+            Female
+          </button>
+        </div>
+
+        <label class="card weight">
+          <span class="card-title">Body Weight</span>
+          <span class="weight-row">
+            <input id="weight" type="text" inputmode="numeric" placeholder="enter amount" maxlength="3" />
+            <span>lbs</span>
+          </span>
+        </label>
+
+        <div class="drinks">
+          <div class="drink" data-drink="beer">
+            <div class="drink-icon"><span class="beer-box"><img src="bac-assets/beer.svg" alt="" /></span></div>
+            <p class="drink-name">Beer</p>
+            <p class="drink-meta">12 oz · 5%</p>
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="Remove a beer">-</button>
+              <output>0</output>
+              <button type="button" data-step="1" aria-label="Add a beer">+</button>
+            </div>
+          </div>
+          <div class="drink" data-drink="wine">
+            <div class="drink-icon"><img class="icon-24" src="bac-assets/wine.svg" alt="" /></div>
+            <p class="drink-name">Wine</p>
+            <p class="drink-meta">5 oz · 12%</p>
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="Remove a wine">-</button>
+              <output>0</output>
+              <button type="button" data-step="1" aria-label="Add a wine">+</button>
+            </div>
+          </div>
+          <div class="drink" data-drink="liquor">
+            <div class="drink-icon"><img class="icon-24" src="bac-assets/liquor.svg" alt="" /></div>
+            <p class="drink-name">Liquor</p>
+            <p class="drink-meta">1.5 oz · 40%</p>
+            <div class="stepper">
+              <button type="button" data-step="-1" aria-label="Remove a liquor">-</button>
+              <output>0</output>
+              <button type="button" data-step="1" aria-label="Add a liquor">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card time">
+          <span class="card-title">Time Since First Drink</span>
+          <div class="time-row">
+            <input id="hours" type="text" inputmode="numeric" placeholder="0" maxlength="2" aria-label="Hours" />
+            <span class="hours-label">hours</span>
+            <input id="minutes" type="text" inputmode="numeric" placeholder="0" maxlength="2" aria-label="Minutes" />
+            <span class="minutes-label">minutes</span>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <script>
+      // Widmark formula
+      const GRAMS_PER_DRINK = 14; // one US standard drink = 14 g of ethanol
+      const GRAMS_PER_LB = 453.592;
+      const BODY_WATER = { male: 0.68, female: 0.55 }; // Widmark "r"
+      const ELIMINATION_PER_HOUR = 0.015; // average BAC drop per hour (%)
+      const LEGAL_LIMIT = 0.08;
+      const MS_PER_HOUR = 3600000;
+
+      const stage = document.getElementById("stage");
+      const panel = document.getElementById("panel");
+      const weightInput = document.getElementById("weight");
+      const hoursInput = document.getElementById("hours");
+      const minutesInput = document.getElementById("minutes");
+      const countdownEl = document.getElementById("countdown");
+      const bacEl = document.getElementById("bac-now");
+      const legalEl = document.getElementById("legal");
+
+      const state = { sex: null, drinks: { beer: 0, wine: 0, liquor: 0 } };
+      let soberAt = null;
+
+      // Fit the 1728 x 1117 Figma frame to the window
+      function fit() {
+        const scale = Math.min(window.innerWidth / 1728, window.innerHeight / 1117);
+        stage.style.setProperty("--scale", scale);
+      }
+      window.addEventListener("resize", fit);
+      fit();
+
+      // Sex
+      panel.querySelectorAll("[data-sex]").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          state.sex = btn.dataset.sex;
+          panel.querySelectorAll("[data-sex]").forEach((b) => b.setAttribute("aria-pressed", b === btn));
+          update();
+        });
+      });
+
+      // Drinks
+      panel.querySelectorAll("[data-drink]").forEach((card) => {
+        const type = card.dataset.drink;
+        card.querySelectorAll("[data-step]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            state.drinks[type] = Math.min(99, Math.max(0, state.drinks[type] + Number(btn.dataset.step)));
+            renderDrinks();
+            update();
+          });
+        });
+      });
+
+      function renderDrinks() {
+        panel.querySelectorAll("[data-drink]").forEach((card) => {
+          const count = state.drinks[card.dataset.drink];
+          card.querySelector("output").textContent = count;
+          card.querySelector('[data-step="-1"]').disabled = count === 0;
+        });
+      }
+
+      // Keyboard fields: digits only
+      [weightInput, hoursInput, minutesInput].forEach((input) => {
+        input.addEventListener("input", () => {
+          input.value = input.value.replace(/\D/g, "");
+          if (input === minutesInput && Number(input.value) > 59) input.value = "59";
+          update();
+        });
+      });
+
+      document.getElementById("reset").addEventListener("click", () => {
+        state.sex = null;
+        state.drinks = { beer: 0, wine: 0, liquor: 0 };
+        panel.querySelectorAll("[data-sex]").forEach((b) => b.setAttribute("aria-pressed", "false"));
+        weightInput.value = hoursInput.value = minutesInput.value = "";
+        renderDrinks();
+        update();
+      });
+
+      // Recalculate whenever an input changes. Once everything is filled in, show the clock.
+      function update() {
+        const weight = Number(weightInput.value);
+        const hasTime = hoursInput.value !== "" || minutesInput.value !== "";
+        const complete = state.sex && weight >= 50 && hasTime;
+
+        if (!complete) {
+          soberAt = null;
+          stage.classList.remove("is-clock");
+          return;
+        }
+
+        const drinks = state.drinks.beer + state.drinks.wine + state.drinks.liquor;
+        const hoursSince = Number(hoursInput.value || 0) + Number(minutesInput.value || 0) / 60;
+
+        // Widmark: BAC% = (alcohol g / (body weight g × r)) × 100 − β × hours
+        const peak = ((drinks * GRAMS_PER_DRINK) / (weight * GRAMS_PER_LB * BODY_WATER[state.sex])) * 100;
+        const bacNow = Math.max(0, peak - ELIMINATION_PER_HOUR * hoursSince);
+
+        soberAt = Date.now() + (bacNow / ELIMINATION_PER_HOUR) * MS_PER_HOUR;
+        stage.classList.add("is-clock");
+        tick();
+      }
+
+      const pad = (n) => String(n).padStart(2, "0");
+
+      function hms(ms) {
+        const total = Math.ceil(ms / 1000);
+        return { h: Math.floor(total / 3600), m: Math.floor((total % 3600) / 60), s: total % 60 };
+      }
+
+      function tick() {
+        if (soberAt === null) return;
+
+        const remaining = Math.max(0, soberAt - Date.now());
+        const bac = (remaining / MS_PER_HOUR) * ELIMINATION_PER_HOUR;
+
+        if (remaining === 0) {
+          countdownEl.textContent = "00:00";
+          bacEl.textContent = "0.000%";
+          legalEl.textContent = "00:00";
+          return;
+        }
+
+        const t = hms(remaining);
+        countdownEl.textContent = `${pad(t.h)}:${pad(t.m)}:${pad(t.s)}`;
+        bacEl.textContent = bac.toFixed(3) + "%";
+
+        const legalMs = ((bac - LEGAL_LIMIT) / ELIMINATION_PER_HOUR) * MS_PER_HOUR;
+        const l = hms(Math.max(0, legalMs));
+        legalEl.textContent = legalMs > 0 ? `${pad(l.h)}:${pad(l.m)}` : "00:00";
+      }
+
+      setInterval(tick, 250);
+    </script>
+  </body>
+</html>
